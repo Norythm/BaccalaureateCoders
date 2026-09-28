@@ -1,0 +1,13 @@
+# Source PDFs (~49MB) — intentionally untracked, kept locally only
+Programming-ArtificialIntelligence-Ar-EB-part1.pdf
+mragaa-alohd-alaol-student.pdf
+mragaa-alohd-alaol-akhtyar-mn-mtaadd-student.pdf
+الخوارزمي ثانية ثانوي عام.pdf
+
+# Python cache
+site/__pycache__/
+*.pyc
+*.pyo
+
+# Desktop metadata
+.directory
