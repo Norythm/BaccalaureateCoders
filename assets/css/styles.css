@@ -1,0 +1,51 @@
+:root{
+  --paper:#faf7f1;
+  --card:#fffdf9;
+  --ink:#2b2620;
+  --muted:#6f675c;
+  --line:#e0d6c2;
+  --accent:#5c6e4e;
+  --accent-soft:#eef0e6;
+  --warn-bg:#fdf6e3;
+  --warn-line:#c9a227;
+  --ans-bg:#f2f6ec;
+  --ans-line:#5c6e4e;
+}
+*{box-sizing:border-box}
+html{-webkit-text-size-adjust:100%}
+body{margin:0;background:var(--paper);color:var(--ink);line-height:1.9;font-family:'Segoe UI',Tahoma,'Noto Kufi Arabic','Noto Naskh Arabic',Arial,sans-serif;font-variant-numeric:tabular-nums}
+header{background:var(--card);border-bottom:1px solid var(--line);padding:1.2rem 1rem;text-align:center}
+header h1{margin:0 0 .3rem;font-size:1.35rem}
+header .sub{color:var(--muted);font-size:.95rem}
+nav{position:sticky;top:0;background:var(--card);border-bottom:1px solid var(--line);display:flex;gap:.5rem;justify-content:center;padding:.6rem;z-index:10;flex-wrap:wrap}
+nav a{color:var(--ink);border:1px solid var(--line);background:var(--paper);padding:.3rem 1.1rem;border-radius:6px;text-decoration:none}
+.toolbar{display:flex;gap:.5rem;justify-content:center;padding:.8rem;flex-wrap:wrap;background:var(--card);border-bottom:1px solid var(--line)}
+.toolbar input,.toolbar select,.toolbar button{padding:.45rem .8rem;border-radius:6px;border:1px solid var(--line);font-size:1rem;font-family:inherit;background:#fff;color:var(--ink)}
+.toolbar button{background:var(--accent);color:#fff;border:1px solid var(--accent);cursor:pointer}
+main{max-width:1000px;margin:auto;padding:1rem}
+section{background:var(--card);border:1px solid var(--line);border-radius:8px;padding:1rem;margin-bottom:1.5rem}
+h2.sec{border-right:4px solid var(--accent);padding-right:.6rem;margin-top:0}
+h3.grp{background:var(--accent-soft);border:1px solid var(--line);padding:.4rem .8rem;border-radius:6px}
+.card{border:1px solid var(--line);border-radius:6px;padding:.7rem;margin:.7rem 0;background:#fff}
+details.lesson summary{cursor:pointer;font-size:1.05rem}
+.badge{border:1px solid var(--line);background:var(--accent-soft);border-radius:4px;padding:.05rem .7rem;font-size:.85rem}
+.badge.code{background:var(--accent);border-color:var(--accent);color:#fff}
+.idea{background:var(--warn-bg);border-right:4px solid var(--warn-line);padding:.5rem .8rem;border-radius:4px}
+.terms{display:flex;flex-wrap:wrap;gap:.4rem}
+.term{background:var(--paper);border:1px solid var(--line);border-radius:4px;padding:.05rem .7rem;font-size:.9rem}
+.src{color:var(--muted);font-size:.85rem;margin-top:.5rem}
+.qid{border:1px solid var(--line);background:var(--paper);border-radius:4px;padding:.05rem .6rem;font-size:.85rem;direction:ltr;display:inline-block}
+.ktag{background:var(--accent-soft);border:1px solid var(--line);border-radius:4px;padding:.05rem .6rem;font-size:.85rem}
+.ltag{background:var(--paper);border:1px solid var(--line);border-radius:4px;padding:.05rem .6rem;font-size:.85rem}
+.qhead{display:flex;gap:.4rem;flex-wrap:wrap;align-items:center}
+.opts{display:flex;flex-direction:column;gap:.4rem;margin:.5rem 0}
+.opt{display:flex;gap:.5rem;align-items:flex-start;border:1px solid var(--line);border-radius:6px;padding:.4rem .6rem;cursor:pointer;background:#fff}
+.ol{border:1px solid var(--line);background:var(--paper);min-width:1.7rem;height:1.7rem;border-radius:4px;display:inline-flex;align-items:center;justify-content:center;font-size:.9rem}
+textarea{width:100%;border:1px solid var(--line);border-radius:6px;padding:.5rem;font-family:inherit;font-size:1rem;background:#fff;color:var(--ink)}
+.ans{background:var(--ans-bg);border-right:4px solid var(--ans-line);padding:.5rem .8rem;border-radius:4px;margin:.4rem 0}
+.ev{background:var(--paper);border:1px solid var(--line);padding:.4rem .8rem;border-radius:4px;font-size:.92rem}
+.note{background:var(--warn-bg);border:1px solid var(--warn-line);border-radius:6px;padding:.6rem 1rem;margin-bottom:1rem}
+.cnt{color:var(--muted);font-size:.9rem}
+.der{background:var(--warn-bg);border:1px solid var(--warn-line);border-radius:4px;padding:.05rem .6rem;font-size:.8rem}
+@media(max-width:640px){main{padding:.5rem}section{padding:.6rem}}
+@media print{nav,.toolbar,header .sub{display:none}details.lesson{break-inside:avoid}}

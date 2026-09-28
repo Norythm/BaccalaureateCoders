@@ -119,109 +119,158 @@ for gtitle, gkey, qs in GROUPS:
     s3.append(f"<h3 class='grp' data-group='{esc(gkey)}'>{esc(gtitle)} <span class='cnt'>({len(qs)})</span></h3>\n" + "\n".join(cards))
 SEC3 = "\n".join(s3)
 
-CSS = """*{box-sizing:border-box}body{font-family:'Segoe UI',Tahoma,Arial,sans-serif;background:#f4f6fa;color:#1a1a1a;margin:0;line-height:1.9}
-header{background:#1b3a5c;color:#fff;padding:1.2rem;text-align:center}
-nav{position:sticky;top:0;background:#fff;border-bottom:2px solid #1b3a5c;display:flex;gap:.5rem;justify-content:center;padding:.6rem;z-index:10;flex-wrap:wrap}
-nav a{background:#1b3a5c;color:#fff;padding:.4rem 1.1rem;border-radius:20px;text-decoration:none}
-.toolbar{display:flex;gap:.5rem;justify-content:center;padding:.8rem;flex-wrap:wrap;background:#e9eef5}
-.toolbar input,.toolbar select,.toolbar button{padding:.45rem .8rem;border-radius:8px;border:1px solid #bbb;font-size:1rem;font-family:inherit}
-.toolbar button{background:#1b3a5c;color:#fff;border:none;cursor:pointer}
+CSS = """:root{
+  --paper:#faf7f1;
+  --card:#fffdf9;
+  --ink:#2b2620;
+  --muted:#6f675c;
+  --line:#e0d6c2;
+  --accent:#5c6e4e;
+  --accent-soft:#eef0e6;
+  --warn-bg:#fdf6e3;
+  --warn-line:#c9a227;
+  --ans-bg:#f2f6ec;
+  --ans-line:#5c6e4e;
+}
+*{box-sizing:border-box}
+html{-webkit-text-size-adjust:100%}
+body{margin:0;background:var(--paper);color:var(--ink);line-height:1.9;font-family:'Segoe UI',Tahoma,'Noto Kufi Arabic','Noto Naskh Arabic',Arial,sans-serif;font-variant-numeric:tabular-nums}
+header{background:var(--card);border-bottom:1px solid var(--line);padding:1.2rem 1rem;text-align:center}
+header h1{margin:0 0 .3rem;font-size:1.35rem}
+header .sub{color:var(--muted);font-size:.95rem}
+nav{position:sticky;top:0;background:var(--card);border-bottom:1px solid var(--line);display:flex;gap:.5rem;justify-content:center;padding:.6rem;z-index:10;flex-wrap:wrap}
+nav a{color:var(--ink);border:1px solid var(--line);background:var(--paper);padding:.3rem 1.1rem;border-radius:6px;text-decoration:none}
+.toolbar{display:flex;gap:.5rem;justify-content:center;padding:.8rem;flex-wrap:wrap;background:var(--card);border-bottom:1px solid var(--line)}
+.toolbar input,.toolbar select,.toolbar button{padding:.45rem .8rem;border-radius:6px;border:1px solid var(--line);font-size:1rem;font-family:inherit;background:#fff;color:var(--ink)}
+.toolbar button{background:var(--accent);color:#fff;border:1px solid var(--accent);cursor:pointer}
 main{max-width:1000px;margin:auto;padding:1rem}
-section{background:#fff;border-radius:12px;padding:1rem;margin-bottom:1.5rem;box-shadow:0 1px 4px rgba(0,0,0,.08)}
-h2.sec{border-right:5px solid #1b3a5c;padding-right:.6rem}
-h3.grp{background:#eef3f9;padding:.4rem .8rem;border-radius:8px}
-.card{border:1px solid #ddd;border-radius:10px;padding:.7rem;margin:.7rem 0;background:#fff}
+section{background:var(--card);border:1px solid var(--line);border-radius:8px;padding:1rem;margin-bottom:1.5rem}
+h2.sec{border-right:4px solid var(--accent);padding-right:.6rem;margin-top:0}
+h3.grp{background:var(--accent-soft);border:1px solid var(--line);padding:.4rem .8rem;border-radius:6px}
+.card{border:1px solid var(--line);border-radius:6px;padding:.7rem;margin:.7rem 0;background:#fff}
 details.lesson summary{cursor:pointer;font-size:1.05rem}
-.badge{background:#1b3a5c;color:#fff;border-radius:12px;padding:.1rem .7rem;font-size:.85rem}
-.badge.code{background:#3a7d44}
-.idea{background:#fffbe6;border-right:4px solid #d9a400;padding:.5rem .8rem;border-radius:6px}
+.badge{border:1px solid var(--line);background:var(--accent-soft);border-radius:4px;padding:.05rem .7rem;font-size:.85rem}
+.badge.code{background:var(--accent);border-color:var(--accent);color:#fff}
+.idea{background:var(--warn-bg);border-right:4px solid var(--warn-line);padding:.5rem .8rem;border-radius:4px}
 .terms{display:flex;flex-wrap:wrap;gap:.4rem}
-.term{background:#eef3f9;border:1px solid #c6d4e6;border-radius:14px;padding:.1rem .7rem;font-size:.9rem}
-.src{color:#666;font-size:.85rem;margin-top:.5rem}
-.qid{background:#5b2d8e;color:#fff;border-radius:8px;padding:.05rem .6rem;font-size:.85rem;direction:ltr;display:inline-block}
-.ktag{background:#0b6e4f;color:#fff;border-radius:8px;padding:.05rem .6rem;font-size:.85rem}
-.ltag{background:#eee;border-radius:8px;padding:.05rem .6rem;font-size:.85rem}
+.term{background:var(--paper);border:1px solid var(--line);border-radius:4px;padding:.05rem .7rem;font-size:.9rem}
+.src{color:var(--muted);font-size:.85rem;margin-top:.5rem}
+.qid{border:1px solid var(--line);background:var(--paper);border-radius:4px;padding:.05rem .6rem;font-size:.85rem;direction:ltr;display:inline-block}
+.ktag{background:var(--accent-soft);border:1px solid var(--line);border-radius:4px;padding:.05rem .6rem;font-size:.85rem}
+.ltag{background:var(--paper);border:1px solid var(--line);border-radius:4px;padding:.05rem .6rem;font-size:.85rem}
 .qhead{display:flex;gap:.4rem;flex-wrap:wrap;align-items:center}
 .opts{display:flex;flex-direction:column;gap:.4rem;margin:.5rem 0}
-.opt{display:flex;gap:.5rem;align-items:flex-start;border:1px solid #ddd;border-radius:8px;padding:.4rem .6rem;cursor:pointer}
-.opt:hover{background:#f2f7ff}
-.ol{background:#1b3a5c;color:#fff;min-width:1.7rem;height:1.7rem;border-radius:50%;display:inline-flex;align-items:center;justify-content:center;font-size:.9rem}
-textarea{width:100%;border:1px solid #bbb;border-radius:8px;padding:.5rem;font-family:inherit;font-size:1rem}
-.ans{background:#eefbef;border-right:4px solid #2e7d32;padding:.5rem .8rem;border-radius:6px;margin:.4rem 0}
-.ev{background:#f6f6f6;padding:.4rem .8rem;border-radius:6px;font-size:.92rem}
-.note{background:#fff3e0;border:1px solid #e0a800;border-radius:8px;padding:.6rem 1rem;margin-bottom:1rem}
-.cnt{color:#555;font-size:.9rem}
-.der{background:#fff3e0;border:1px solid #e0a800;border-radius:8px;padding:.05rem .6rem;font-size:.8rem}
+.opt{display:flex;gap:.5rem;align-items:flex-start;border:1px solid var(--line);border-radius:6px;padding:.4rem .6rem;cursor:pointer;background:#fff}
+.ol{border:1px solid var(--line);background:var(--paper);min-width:1.7rem;height:1.7rem;border-radius:4px;display:inline-flex;align-items:center;justify-content:center;font-size:.9rem}
+textarea{width:100%;border:1px solid var(--line);border-radius:6px;padding:.5rem;font-family:inherit;font-size:1rem;background:#fff;color:var(--ink)}
+.ans{background:var(--ans-bg);border-right:4px solid var(--ans-line);padding:.5rem .8rem;border-radius:4px;margin:.4rem 0}
+.ev{background:var(--paper);border:1px solid var(--line);padding:.4rem .8rem;border-radius:4px;font-size:.92rem}
+.note{background:var(--warn-bg);border:1px solid var(--warn-line);border-radius:6px;padding:.6rem 1rem;margin-bottom:1rem}
+.cnt{color:var(--muted);font-size:.9rem}
+.der{background:var(--warn-bg);border:1px solid var(--warn-line);border-radius:4px;padding:.05rem .6rem;font-size:.8rem}
 @media(max-width:640px){main{padding:.5rem}section{padding:.6rem}}
 @media print{nav,.toolbar,header .sub{display:none}details.lesson{break-inside:avoid}}"""
 
-JS = """const P='bacai:';
-document.querySelectorAll('#sec2 input[type=radio]').forEach(r=>{
- const k=P+'m:'+r.name;
- try{if(localStorage.getItem(k)===r.value)r.checked=true;}catch(e){}
- r.addEventListener('change',()=>{try{localStorage.setItem(k,r.value);}catch(e){}});
-});
-document.querySelectorAll('#sec2 textarea').forEach(t=>{
- const k=P+'e:'+t.dataset.qid;
- try{const v=localStorage.getItem(k);if(v!==null)t.value=v;}catch(e){}
- t.addEventListener('input',()=>{try{localStorage.setItem(k,t.value);}catch(e){}});
-});
-const uf=document.getElementById('uf'),sf=document.getElementById('s');
-function filt(){
- const u=uf.value,q=sf.value.trim();
- document.querySelectorAll('main .card').forEach(c=>{
-  const okU=(u==='all'||c.dataset.unit===u||c.dataset.unit==='?');
-  const okQ=(!q||(c.dataset.search||'').includes(q));
-  c.style.display=(okU&&okQ)?'':'none';
- });
- document.querySelectorAll('h3.grp').forEach(h=>{
-  let n=h.nextElementSibling,vis=false;
-  while(n&&!n.classList.contains('grp')&&n.tagName!=='H3'){
-   if(n.classList&&n.classList.contains('card')&&n.style.display!=='none')vis=true;
-   n=n.nextElementSibling;
+JS_STORAGE = """// localStorage persistence for Section 2 answers. Keys: bacai:m:<qid>, bacai:e:<qid>
+(function () {
+  var P = 'bacai:';
+  document.querySelectorAll('#sec2 input[type=radio]').forEach(function (r) {
+    var k = P + 'm:' + r.name;
+    try { if (localStorage.getItem(k) === r.value) r.checked = true; } catch (e) {}
+    r.addEventListener('change', function () { try { localStorage.setItem(k, r.value); } catch (e) {} });
+  });
+  document.querySelectorAll('#sec2 textarea').forEach(function (t) {
+    var k = P + 'e:' + t.dataset.qid;
+    try { var v = localStorage.getItem(k); if (v !== null) t.value = v; } catch (e) {}
+    t.addEventListener('input', function () { try { localStorage.setItem(k, t.value); } catch (e) {} });
+  });
+})();
+"""
+
+JS_FILTER = """// Unit filter (#uf) + search (#s) for all cards
+(function () {
+  var uf = document.getElementById('uf'), sf = document.getElementById('s');
+  function filt() {
+    var u = uf.value, q = sf.value.trim();
+    document.querySelectorAll('main .card').forEach(function (c) {
+      var okU = (u === 'all' || c.dataset.unit === u || c.dataset.unit === '?');
+      var okQ = (!q || (c.dataset.search || '').includes(q));
+      c.style.display = (okU && okQ) ? '' : 'none';
+    });
+    document.querySelectorAll('h3.grp').forEach(function (h) {
+      var n = h.nextElementSibling, vis = false;
+      while (n && !n.classList.contains('grp') && n.tagName !== 'H3') {
+        if (n.classList && n.classList.contains('card') && n.style.display !== 'none') vis = true;
+        n = n.nextElementSibling;
+      }
+      h.style.display = vis ? '' : 'none';
+    });
   }
-  h.style.display=vis?'':'none';
- });
-}
-uf.addEventListener('change',filt);sf.addEventListener('input',filt);
-function pr(){window.print();}"""
+  uf.addEventListener('change', filt);
+  sf.addEventListener('input', filt);
+})();
+"""
+
+JS_MAIN = """// Wiring + print
+function pr() { window.print(); }
+document.getElementById('printBtn').addEventListener('click', pr);
+"""
 
 HTML = f"""<!DOCTYPE html>
 <html lang="ar" dir="rtl">
 <head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <title>البرمجة والذكاء الاصطناعي — الصف الثاني بكالوريا</title>
-<style>{CSS}</style></head>
+<link rel="stylesheet" href="assets/css/styles.css"></head>
 <body>
 <header><h1>البرمجة والذكاء الاصطناعي — الصف الثاني بكالوريا (الترم الأول)</h1>
 <div class="sub">الشرح (14 درسا) • الأسئلة (357 سؤالا) • الإجابات النموذجية — من المستندات الأربعة فقط</div></header>
 <nav><a href="#sec1">الشرح</a><a href="#sec2">الأسئلة</a><a href="#sec3">الإجابات</a></nav>
 <div class="toolbar">
 <select id="uf"><option value="all">كل الوحدات</option><option value="1">الوحدة 1</option><option value="2">الوحدة 2</option><option value="3">الوحدة 3</option><option value="4">الوحدة 4</option></select>
-<input id="s" placeholder="بحث..."><button onclick="pr()">طباعة</button>
+<input id="s" placeholder="بحث..."><button id="printBtn">طباعة</button>
 </div>
 <main>
 <section id="sec1"><h2 class="sec">القسم الأول — الشرح (14 درسا)</h2>{SEC1}</section>
 <section id="sec2"><h2 class="sec">القسم الثاني — الأسئلة (357 سؤالا، بدون تصحيح)</h2>{SEC2}</section>
 <section id="sec3"><h2 class="sec">القسم الثالث — الإجابات النموذجية</h2>{SEC3}</section>
 </main>
-<script>{JS}</script>
+<script src="assets/js/storage.js"></script>
+<script src="assets/js/filter.js"></script>
+<script src="assets/js/main.js"></script>
 </body></html>"""
 
 # ---------- acceptance checks ----------
-sec2_region = HTML.split('id="sec2"')[1].split('id="sec3"')[0]
+sec2_region = SEC2
 for bad in ["data-correct", "data-answer", "correct", "الإجابة الصحيحة", "نموذج الإجابة"]:
     assert bad not in sec2_region, f"LEAK: {bad} in section 2"
 sec2_qids = set(re.findall(r"data-qid='([^']+)'", sec2_region))
-sec3_region = HTML.split('id="sec3"')[1]
-sec3_qids = set(re.findall(r'<span class="qid">([^<]+)</span>', sec3_region))
+sec3_qids = set(re.findall(r'<span class="qid">([^<]+)</span>', SEC3))
 assert sec2_qids == sec3_qids, f"QID mismatch: {len(sec2_qids)} vs {len(sec3_qids)}"
 assert len(sec2_qids) == 357, len(sec2_qids)
 # every sec2 radio group has matching name/qid, textareas have qid
 assert sec2_region.count('type="radio"') == sum(len(q["opts"]) for q in ALLQ if q["kind"] == "mcq")
 assert sec2_region.count("<textarea") == sum(1 for q in ALLQ if q["kind"] == "essay")
+# split-file structure: markup only, assets linked relatively, no CDN
+assert "<style>" not in HTML and "<script>" not in HTML, "inline style/script found"
+for ref in ['href="assets/css/styles.css"', 'src="assets/js/storage.js"',
+            'src="assets/js/filter.js"', 'src="assets/js/main.js"']:
+    assert ref in HTML, f"missing asset ref {ref}"
+assert 'onclick=' not in HTML, "inline handler found"
+assert "bacai:m:" in JS_STORAGE and "bacai:e:" in JS_STORAGE, "storage keys changed"
+assert "getElementById('uf')" in JS_FILTER and "getElementById('s')" in JS_FILTER
+for blob, name in [(HTML, "html"), (CSS, "css"), (JS_STORAGE, "storage"),
+                   (JS_FILTER, "filter"), (JS_MAIN, "main")]:
+    assert "http://" not in blob and "https://" not in blob, f"external URL in {name}"
 
-open("/media/Games/Programming/index.html", "w", encoding="utf-8").write(HTML)
 import os
+BASE = "/media/Games/Programming"
+os.makedirs(f"{BASE}/assets/css", exist_ok=True)
+os.makedirs(f"{BASE}/assets/js", exist_ok=True)
+open(f"{BASE}/index.html", "w", encoding="utf-8").write(HTML)
+open(f"{BASE}/assets/css/styles.css", "w", encoding="utf-8").write(CSS)
+open(f"{BASE}/assets/js/storage.js", "w", encoding="utf-8").write(JS_STORAGE)
+open(f"{BASE}/assets/js/filter.js", "w", encoding="utf-8").write(JS_FILTER)
+open(f"{BASE}/assets/js/main.js", "w", encoding="utf-8").write(JS_MAIN)
 print("OK lessons=14 totalQ=357 mcq=%d essay=%d" % (
     sum(1 for q in ALLQ if q["kind"] == "mcq"),
     sum(1 for q in ALLQ if q["kind"] == "essay")))
