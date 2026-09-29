@@ -23,4 +23,27 @@
       if (sc) sc.textContent = total ? ('النتيجة: ' + right + ' / ' + total) : 'لا أسئلة اختيار قابلة للتصحيح في هذه المجموعة.';
     });
   });
+  // Scoped reset: clears only this data-hgroup (bacai:m:/bacai:e:), theme key untouched
+  document.querySelectorAll('.resetBtn').forEach(function (btn) {
+    btn.addEventListener('click', function () {
+      if (!window.confirm('هل أنت متأكد من مسح إجابات هذا القسم؟')) return;
+      var gid = btn.dataset.hgroup;
+      var scope = btn.closest('.view');
+      scope.querySelectorAll('.card.q[data-hgroup="' + gid + '"]').forEach(function (card) {
+        var opts = card.querySelector('.opts');
+        if (opts && opts.dataset.qid) {
+          try { localStorage.removeItem('bacai:m:' + opts.dataset.qid); } catch (e) {}
+        }
+        var ta = card.querySelector('textarea');
+        if (ta && ta.dataset.qid) {
+          try { localStorage.removeItem('bacai:e:' + ta.dataset.qid); } catch (e) {}
+          ta.value = '';
+        }
+        card.querySelectorAll('input[type=radio]').forEach(function (r) { r.checked = false; });
+        card.querySelectorAll('.opt').forEach(function (o) { o.classList.remove('ok', 'bad'); });
+      });
+      var sc = scope.querySelector('.score[data-score="' + gid + '"]');
+      if (sc) sc.textContent = '';
+    });
+  });
 })();

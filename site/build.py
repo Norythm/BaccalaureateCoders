@@ -160,10 +160,11 @@ for gtitle, gkind, gkey, qs in HGROUPS:
         cards.append(f"""<div class="card q" data-unit="{esc(unit_of(q))}" data-hgroup="{esc(gid)}" data-search="{esc(q['text'])}">
 <div class="qhead"><span class="qid">{esc(q['qid'])}</span><span class="ktag">{KIND_AR[q['kind']]}</span><span class="ltag">الدرس {esc(q['lesson'])}</span></div>
 <p class="qtext">{esc(q['text'])}</p>{inner}
-<div class="src">المصدر: {esc(q['src'])}</div></div>""")
+</div>""")
     grade_btn = ""
     if nmcq:
-        grade_btn = (f"<button class='gradeBtn' data-hgroup='{esc(gid)}'>عرض الحل الصحيح لإجاباتي</button>"
+        grade_btn = (f"<button class='gradeBtn' data-hgroup='{esc(gid)}' type='button'>عرض الحل الصحيح لإجاباتي</button>"
+                     f"<button class='resetBtn' data-hgroup='{esc(gid)}' type='button'>مسح إجاباتي وإعادة المحاولة</button>"
                      f"<span class='score' data-score='{esc(gid)}'></span>"
                      f"<div class='enote'>التصحيح الآلي للاختيار من متعدد فقط ({nmcq} سؤالا) — المقالية ({ness}) للمذاكرة الذاتية.</div>")
     s2.append(f"<h3 class='grp' data-hgroup-head='{esc(gid)}'>{esc(gtitle)} <span class='cnt'>({len(qs)})</span><br>{grade_btn}</h3>\n" + "\n".join(cards))
@@ -282,7 +283,10 @@ section{background:var(--card);border:1px solid var(--line);border-radius:8px;pa
 h2.sec{border-right:4px solid var(--accent);padding-right:.6rem;margin-top:0}
 h3.grp{background:var(--accent-soft);border:1px solid var(--line);padding:.4rem .8rem;border-radius:6px}
 .card{border:1px solid var(--line);border-radius:6px;padding:.7rem;margin:.7rem 0;background:var(--card)}
-details.lesson summary{cursor:pointer;font-size:1.05rem}
+details.lesson{margin:.7rem 0}
+details.lesson summary{cursor:pointer;font-size:1.05rem;list-style-position:inside;margin:0}
+details.lesson summary::marker{color:var(--accent)}
+details.lesson .body{margin-top:.6rem}
 .badge{border:1px solid var(--line);background:var(--accent-soft);border-radius:4px;padding:.05rem .7rem;font-size:.85rem}
 .badge.code{background:var(--accent);border-color:var(--accent);color:var(--accent-ink)}
 .idea{background:var(--warn-bg);border-right:4px solid var(--warn-line);padding:.5rem .8rem;border-radius:4px}
@@ -307,6 +311,7 @@ textarea{width:100%;border:1px solid var(--line);border-radius:6px;padding:.5rem
 .cnt{color:var(--muted);font-size:.9rem}
 .der{background:var(--warn-bg);border:1px solid var(--warn-line);border-radius:4px;padding:.05rem .6rem;font-size:.8rem}
 .gradeBtn{font-family:inherit;font-size:.9rem;background:var(--accent);color:var(--accent-ink);border:1px solid var(--accent);border-radius:6px;padding:.3rem .9rem;cursor:pointer;margin-top:.4rem}
+.resetBtn{font-family:inherit;font-size:.9rem;background:var(--card);color:var(--ink);border:1px solid var(--line);border-radius:6px;padding:.3rem .9rem;cursor:pointer;margin-top:.4rem;margin-right:.4rem}
 .score{font-size:.9rem;color:var(--muted);margin-right:.6rem}
 .enote{font-size:.82rem;color:var(--muted)}
 @media(max-width:640px){main{padding:.5rem}section{padding:.6rem}}
@@ -423,6 +428,29 @@ JS_GRADE = """// Per-group localized grading (MCQ only). ANSWERS consulted only 
       if (sc) sc.textContent = total ? ('النتيجة: ' + right + ' / ' + total) : 'لا أسئلة اختيار قابلة للتصحيح في هذه المجموعة.';
     });
   });
+  // Scoped reset: clears only this data-hgroup (bacai:m:/bacai:e:), theme key untouched
+  document.querySelectorAll('.resetBtn').forEach(function (btn) {
+    btn.addEventListener('click', function () {
+      if (!window.confirm('هل أنت متأكد من مسح إجابات هذا القسم؟')) return;
+      var gid = btn.dataset.hgroup;
+      var scope = btn.closest('.view');
+      scope.querySelectorAll('.card.q[data-hgroup="' + gid + '"]').forEach(function (card) {
+        var opts = card.querySelector('.opts');
+        if (opts && opts.dataset.qid) {
+          try { localStorage.removeItem('bacai:m:' + opts.dataset.qid); } catch (e) {}
+        }
+        var ta = card.querySelector('textarea');
+        if (ta && ta.dataset.qid) {
+          try { localStorage.removeItem('bacai:e:' + ta.dataset.qid); } catch (e) {}
+          ta.value = '';
+        }
+        card.querySelectorAll('input[type=radio]').forEach(function (r) { r.checked = false; });
+        card.querySelectorAll('.opt').forEach(function (o) { o.classList.remove('ok', 'bad'); });
+      });
+      var sc = scope.querySelector('.score[data-score="' + gid + '"]');
+      if (sc) sc.textContent = '';
+    });
+  });
 })();
 """
 
@@ -480,6 +508,18 @@ sec2_region = SEC2
 for bad in ["data-correct", "data-answer", "correct", "الإجابة الصحيحة", "نموذج الإجابة"]:
     assert bad not in sec2_region, f"LEAK: {bad} in section 2"
 assert "ANSWERS" not in sec2_region and "answers.js" not in sec2_region
+for bad in ["تكميلي", "class=\"src\"", ".pdf", "Programming-ArtificialIntelligence", "mragaa", "Examify"]:
+    assert bad not in sec2_region, f"LABEL LEAK: {bad} in section 2"
+# standalone source label only (التحيز الخوارزمي is a lesson term, allowed)
+assert not re.search(r'(?<!التحيز )الخوارزمي', sec2_region), "LABEL LEAK: standalone الخوارزمي in section 2"
+assert 'المصدر:' not in sec2_region, "source line in section 2"
+assert sec2_region.count("resetBtn") == 15, sec2_region.count("resetBtn")
+assert sec2_region.count("gradeBtn") == 15, sec2_region.count("gradeBtn")
+assert "هل أنت متأكد من مسح إجابات هذا القسم؟" in JS_GRADE, "reset confirm missing"
+assert "bacai:m:" in JS_GRADE and "bacai:e:" in JS_GRADE, "reset keys missing"
+assert "bacai:theme" not in JS_GRADE, "reset touches theme key"
+assert "sec3" not in JS_GRADE.lower() and "scroll" not in JS_GRADE.lower(), "grade escapes group"
+assert "fetch(" not in JS_GRADE and "fetch(" not in JS_STORAGE and "fetch(" not in JS_FILTER, "network call found"
 sec2_qids = set(re.findall(r"data-qid='([^']+)'", sec2_region))
 sec3_qids = set(re.findall(r'<span class="qid">([^<]+)</span>', SEC3))
 assert sec2_qids == sec3_qids, f"QID mismatch: {len(sec2_qids)} vs {len(sec3_qids)}"
