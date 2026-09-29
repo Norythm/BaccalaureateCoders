@@ -1,7 +1,7 @@
 // SPA views: sidebar switching, hamburger, hash deep-link, mobile drawer
 (function () {
   var links = Array.prototype.slice.call(document.querySelectorAll('#sidebar button[data-view]'));
-  var views = { شرح: 'sec1', 'الأسئلة': 'sec2', 'الإجابات': 'sec3' };
+  var views = { 'الشرح': 'sec1', 'الأسئلة': 'sec2', 'الإجابات': 'sec3' };
   var burger = document.getElementById('burger');
   var sidebar = document.getElementById('sidebar');
   var overlay = document.getElementById('overlay');
