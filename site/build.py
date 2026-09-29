@@ -208,17 +208,8 @@ for gtitle, gkind, gkey, qs in HGROUPS:
         cards.append(f"""<div class="card q" data-unit="{esc(unit_of(q))}" data-hgroup="{esc(gid)}" data-search="{esc(q['text'])}">
 <div class="qhead"><span class="qid">{esc(q['qid'])}</span><span class="ktag">{KIND_AR[q['kind']]}</span><span class="ltag">الدرس {esc(q['lesson'])}</span></div>
 <p class="qtext">{esc(q['text'])}</p>{inner}
-<button class='revealBtn' data-qid='{esc(q['qid'])}' type='button'>عرض الإجابة</button>
-<div class='reveal' data-reveal='{esc(q['qid'])}' hidden></div>
 </div>""")
-    grade_btn = ""
-    if nmcq:
-        nman = sum(1 for q in qs if q["kind"] == "mcq" and q["qid"] not in gradeable)
-        grade_btn = (f"<button class='gradeBtn' data-hgroup='{esc(gid)}' type='button'>عرض الحل الصحيح لإجاباتي</button>"
-                     f"<button class='resetBtn' data-hgroup='{esc(gid)}' type='button'>مسح إجاباتي وإعادة المحاولة</button>"
-                     f"<span class='score' data-score='{esc(gid)}' data-graded='{nmcq}' data-manual='{nman}' data-essay='{ness}'></span>"
-                     f"<div class='enote'>التصحيح الآلي للاختيار من متعدد فقط ({nmcq} سؤالا)" + (f" — {nman} تحتاج مراجعة يدوية" if nman else "") + f" — المقالية ({ness}) للمذاكرة الذاتية.</div>")
-    s2.append(f"<h3 class='grp' data-hgroup-head='{esc(gid)}'>{esc(gtitle)} <span class='cnt'>({len(qs)})</span><br>{grade_btn}</h3>\n" + "\n".join(cards))
+    s2.append(f"<h3 class='grp' data-hgroup-head='{esc(gid)}'>{esc(gtitle)} <span class='cnt'>({len(qs)})</span></h3>\n" + "\n".join(cards))
 SEC2 = "\n".join(s2)
 
 # ---------- Section 3 (mirrors Section 2, MCQ justifications) ----------
@@ -383,10 +374,19 @@ section{background:var(--card);border:1px solid var(--line);border-radius:8px;pa
 h2.sec{border-right:4px solid var(--accent);padding-right:.6rem;margin-top:0}
 h3.grp{background:var(--accent-soft);border:1px solid var(--line);padding:.4rem .8rem;border-radius:6px}
 .card{border:1px solid var(--line);border-radius:6px;padding:.7rem;margin:.7rem 0;background:var(--card)}
-details.lesson{margin:.7rem 0}
-details.lesson summary{cursor:pointer;font-size:1.05rem;list-style-position:inside;margin:0}
-details.lesson summary::marker{color:var(--accent)}
-details.lesson .body{margin-top:.6rem}
+/* ---- Premium Section 1 (الشرح): readability-first lesson cards ---- */
+#sec1 details.lesson{margin:.9rem 0;border-radius:10px;box-shadow:0 1px 3px rgba(0,0,0,.06)}
+#sec1 details.lesson summary{cursor:pointer;font-size:1.12rem;font-weight:600;line-height:2;list-style-position:inside;margin:0;padding:.55rem .9rem;border-radius:10px}
+#sec1 details.lesson summary::marker{color:var(--accent);font-size:1.1em}
+#sec1 details.lesson summary b{font-weight:700}
+#sec1 details.lesson .body{margin-top:.6rem;padding:.2rem .9rem .9rem;font-size:1.03rem;line-height:2}
+#sec1 details.lesson .body h4{font-size:1.02rem;margin:1rem 0 .4rem;color:var(--accent)}
+#sec1 details.lesson .body ul{margin:.3rem 0 .6rem;padding-right:1.4rem}
+#sec1 details.lesson .body li{margin-bottom:.3rem}
+#sec1 .badge{font-size:.9rem;padding:.1rem .8rem}
+#sec1 .idea{font-size:1.02rem;line-height:2;padding:.7rem 1rem}
+#sec1 .terms{gap:.5rem}
+#sec1 a.term,#sec1 span.term{font-size:.95rem;padding:.15rem .8rem;border-radius:6px}
 .badge{border:1px solid var(--line);background:var(--accent-soft);border-radius:4px;padding:.05rem .7rem;font-size:.85rem}
 .badge.code{background:var(--accent);border-color:var(--accent);color:var(--accent-ink)}
 .idea{background:var(--warn-bg);border-right:4px solid var(--warn-line);padding:.5rem .8rem;border-radius:4px}
@@ -394,14 +394,6 @@ details.lesson .body{margin-top:.6rem}
 a.term{background:var(--paper);border:1px solid var(--line);border-radius:4px;padding:.05rem .7rem;font-size:.9rem;color:var(--accent);text-decoration:none}
 span.term{background:var(--paper);border:1px solid var(--line);border-radius:4px;padding:.05rem .7rem;font-size:.9rem;color:var(--muted)}
 li:target{background:var(--accent-soft);border-radius:4px}
-.revealBtn{font-family:inherit;font-size:.88rem;background:var(--card);color:var(--accent);border:1px solid var(--accent);border-radius:6px;padding:.25rem .9rem;cursor:pointer;margin-top:.4rem}
-.reveal{display:grid;grid-template-rows:0fr;opacity:0}
-.reveal.open{grid-template-rows:1fr;opacity:1}
-.reveal>div{overflow:hidden}
-.revealBody{background:var(--ans-bg);border:1px solid var(--ans-line);border-radius:6px;padding:.5rem .8rem;margin-top:.4rem}
-.revealBody .why{margin-top:.4rem}
-.revealBody .why ul{margin:.3rem 0;padding-right:1.2rem}
-.hint{font-size:.85rem;color:var(--muted);margin-top:.3rem}
 footer.srcs{background:var(--card);border-top:1px solid var(--line);color:var(--muted);font-size:.88rem;text-align:center;padding:1rem;max-width:1000px;margin:0 auto 1.5rem;border-left:1px solid var(--line);border-right:1px solid var(--line);border-bottom:1px solid var(--line);border-radius:0 0 8px 8px}
 .card.q,.card.a{content-visibility:auto;contain-intrinsic-size:auto 220px}
 @media(max-width:640px){main{padding:.5rem}section{padding:.6rem}}
@@ -430,11 +422,7 @@ textarea{width:100%;border:1px solid var(--line);border-radius:6px;padding:.5rem
 .note{background:var(--warn-bg);border:1px solid var(--warn-line);border-radius:6px;padding:.6rem 1rem;margin-bottom:1rem}
 .cnt{color:var(--muted);font-size:.9rem}
 .der{background:var(--warn-bg);border:1px solid var(--warn-line);border-radius:4px;padding:.05rem .6rem;font-size:.8rem}
-.gradeBtn{font-family:inherit;font-size:.9rem;background:var(--accent);color:var(--accent-ink);border:1px solid var(--accent);border-radius:6px;padding:.3rem .9rem;cursor:pointer;margin-top:.4rem}
-.resetBtn{font-family:inherit;font-size:.9rem;background:var(--card);color:var(--ink);border:1px solid var(--line);border-radius:6px;padding:.3rem .9rem;cursor:pointer;margin-top:.4rem;margin-right:.4rem}
-.score{font-size:.9rem;color:var(--muted);margin-right:.6rem}
-.enote{font-size:.82rem;color:var(--muted)}
-@media(max-width:640px){main{padding:.5rem}section{padding:.6rem}}
+@media(max-width:640px){main{padding:.5rem}section{padding:.6rem}#sec1 details.lesson .body{font-size:1rem;padding:.2rem .6rem .7rem}}
 @media print{#sidebar,#burger,#overlay,.toolbar{display:none}.view:not(.on){display:none}.view.on{display:block}details.lesson{break-inside:avoid}}"""
 
 JS_VIEWS = """// SPA views: sidebar switching, hamburger, hash deep-link, mobile drawer
@@ -632,13 +620,9 @@ HTML = f"""<!DOCTYPE html>
 <div id="sec3" class="view" hidden><section><h2 class="sec">القسم الثالث — الإجابات النموذجية</h2>{SEC3}</section></div>
 </main>
 <footer class="srcs">{FOOTER}</footer>
-<script src="assets/js/answers.js"></script>
-<script src="assets/js/stopwords.js"></script>
 <script src="assets/js/views.js"></script>
 <script src="assets/js/storage.js"></script>
 <script src="assets/js/filter.js"></script>
-<script src="assets/js/grade.js"></script>
-<script src="assets/js/reveal.js"></script>
 <script src="assets/js/main.js"></script>
 </body></html>"""
 
@@ -652,10 +636,13 @@ for bad in ["تكميلي", "class=\"src\"", ".pdf", "Programming-ArtificialInte
 # standalone source label only (التحيز الخوارزمي is a lesson term, allowed)
 assert not re.search(r'(?<!التحيز )الخوارزمي', sec2_region), "LABEL LEAK: standalone الخوارزمي in section 2"
 assert 'المصدر:' not in sec2_region, "source line in section 2"
-assert sec2_region.count("resetBtn") == 15, sec2_region.count("resetBtn")
-assert sec2_region.count("gradeBtn") == 15, sec2_region.count("gradeBtn")
-assert sec2_region.count("revealBtn") == 357, sec2_region.count("revealBtn")
-assert sec2_region.count("data-reveal=") == 357, sec2_region.count("data-reveal=")
+# PHASE 1 quarantine: zero grading/reveal UI in Section 2
+assert "resetBtn" not in sec2_region, "resetBtn leaked into section 2"
+assert "gradeBtn" not in sec2_region, "gradeBtn leaked into section 2"
+assert "revealBtn" not in sec2_region, "revealBtn leaked into section 2"
+assert "data-reveal=" not in sec2_region, "reveal panel leaked into section 2"
+assert "data-score=" not in sec2_region, "score span leaked into section 2"
+assert "enote" not in sec2_region, "enote leaked into section 2"
 # Section 2 carries no model-answer content
 for bad in ["لماذا هي صحيحة", "لماذا الباقي خطأ", "كلمات مشتركة"]:
     assert bad not in sec2_region, f"ANSWER LEAK: {bad} in section 2"
@@ -666,13 +653,9 @@ assert FOOTER in HTML and 'class="srcs"' in HTML, "footer missing"
 # footer carries the only attribution; no PDF/تكميلي labels anywhere visible
 for bad in ["Programming-ArtificialIntelligence", "mragaa", "Examify"]:
     assert bad not in HTML, f"FILENAME LEAK: {bad}"
+# PHASE 1: grade/reveal logic quarantined on disk (see assets/js/grade.js + reveal.js)
+# but detached from the page. These asserts pin the quarantine, not behavior.
 assert "هل أنت متأكد من مسح إجابات هذا القسم؟" in JS_GRADE, "reset confirm missing"
-assert "bacai:m:" in JS_GRADE and "bacai:e:" in JS_GRADE, "reset keys missing"
-assert "bacai:theme" not in JS_GRADE, "reset touches theme key"
-assert "sec3" not in JS_GRADE.lower() and "scroll" not in JS_GRADE.lower(), "grade escapes group"
-assert "fetch(" not in JS_GRADE and "fetch(" not in JS_STORAGE and "fetch(" not in JS_FILTER and "fetch(" not in JS_REVEAL, "network call found"
-assert "ANSWERS" not in JS_REVEAL and "REASONS" not in JS_REVEAL, "reveal leaks answer data"
-assert "var AR_STOP" not in JS_REVEAL, "stopwords data must load from stopwords.js"
 assert "content-visibility" in CSS and "prefers-reduced-motion" in CSS, "perf/motion CSS missing"
 assert "setTimeout(filt, 150)" in JS_FILTER, "debounce missing"
 assert "sec2" in JS_STORAGE and "addEventListener('change'" in JS_STORAGE, "delegation missing"
@@ -680,25 +663,27 @@ sec2_qids = set(re.findall(r"data-qid='([^']+)'", sec2_region))
 sec3_qids = set(re.findall(r'<span class="qid">([^<]+)</span>', SEC3))
 assert sec2_qids == sec3_qids, f"QID mismatch: {len(sec2_qids)} vs {len(sec3_qids)}"
 assert len(sec2_qids) == 357, len(sec2_qids)
-# Section 3 lookup anchors for reveal.js
+# Section 3 lookup anchors for future reveal.js (Phase 2)
 sec3_qids_attr = set(re.findall(r'data-qid="([^"]+)"', SEC3))
 assert sec2_qids == sec3_qids_attr, "reveal lookup mismatch"
 assert sec2_region.count('type="radio"') == sum(len(q["opts"]) for q in ALLQ if q["kind"] == "mcq")
 assert sec2_region.count("<textarea") == sum(1 for q in ALLQ if q["kind"] == "essay")
 # split-file structure, no inline code, no CDN
 assert "<style>" not in HTML and "<script>" not in HTML, "inline style/script found"
-for ref in ['href="assets/css/styles.css"', 'src="assets/js/answers.js"',
-            'src="assets/js/stopwords.js"',
+for ref in ['href="assets/css/styles.css"',
             'src="assets/js/views.js"', 'src="assets/js/storage.js"',
-            'src="assets/js/filter.js"', 'src="assets/js/grade.js"',
-            'src="assets/js/reveal.js"',
+            'src="assets/js/filter.js"',
             'src="assets/js/main.js"']:
     assert ref in HTML, f"missing asset ref {ref}"
+for ref in ['src="assets/js/answers.js"', 'src="assets/js/stopwords.js"',
+            'src="assets/js/grade.js"', 'src="assets/js/reveal.js"']:
+    assert ref not in HTML, f"quarantined script ref leaked: {ref}"
 assert 'onclick=' not in HTML, "inline handler found"
 assert "bacai:m:" in JS_STORAGE and "bacai:e:" in JS_STORAGE, "storage keys changed"
 assert "getElementById('uf')" in JS_FILTER and "getElementById('s')" in JS_FILTER
 assert ".view.on" in JS_FILTER, "filter not scoped to active view"
 assert "ANSWERS[qid]" in JS_GRADE and "ANSWERS" not in JS_STORAGE and "ANSWERS" not in JS_FILTER
+assert "fetch(" not in JS_STORAGE and "fetch(" not in JS_FILTER, "network call found"
 assert 'data-theme' in CSS and 'bacai:theme' in JS_MAIN, "theme persistence missing"
 for blob, name in [(HTML, "html"), (CSS, "css"), (ANS_JS, "answers"),
                    (STOPWORDS_JS, "stopwords"),
@@ -717,13 +702,15 @@ os.makedirs(f"{BASE}/assets/css", exist_ok=True)
 os.makedirs(f"{BASE}/assets/js", exist_ok=True)
 open(f"{BASE}/index.html", "w", encoding="utf-8").write(HTML)
 open(f"{BASE}/assets/css/styles.css", "w", encoding="utf-8").write(CSS)
-open(f"{BASE}/assets/js/answers.js", "w", encoding="utf-8").write(ANS_JS)
-open(f"{BASE}/assets/js/stopwords.js", "w", encoding="utf-8").write(STOPWORDS_JS)
+# PHASE 1: answers/stopwords/grade/reveal JS stay on disk from previous builds
+# but are NOT regenerated and NOT referenced. Writers kept commented for Phase 2.
+# open(f"{BASE}/assets/js/answers.js", "w", encoding="utf-8").write(ANS_JS)
+# open(f"{BASE}/assets/js/stopwords.js", "w", encoding="utf-8").write(STOPWORDS_JS)
 open(f"{BASE}/assets/js/views.js", "w", encoding="utf-8").write(JS_VIEWS)
 open(f"{BASE}/assets/js/storage.js", "w", encoding="utf-8").write(JS_STORAGE)
 open(f"{BASE}/assets/js/filter.js", "w", encoding="utf-8").write(JS_FILTER)
-open(f"{BASE}/assets/js/grade.js", "w", encoding="utf-8").write(JS_GRADE)
-open(f"{BASE}/assets/js/reveal.js", "w", encoding="utf-8").write(JS_REVEAL)
+# open(f"{BASE}/assets/js/grade.js", "w", encoding="utf-8").write(JS_GRADE)
+# open(f"{BASE}/assets/js/reveal.js", "w", encoding="utf-8").write(JS_REVEAL)
 open(f"{BASE}/assets/js/main.js", "w", encoding="utf-8").write(JS_MAIN)
 print("OK lessons=14 totalQ=357 mcq=%d essay=%d gradeable=%d" % (
     sum(1 for q in ALLQ if q["kind"] == "mcq"),
