@@ -40,17 +40,47 @@ def norm_term(s):
     s = re.sub(r'\s+', ' ', s).strip()
     return s
 
+# Cross-language aliases attested verbatim in the main textbook, e.g.
+# "شخصية المستخدم (Persona)", "المخطط الهيكلي (Wireframe)",
+# "التصميم المتمحور حول المستخدم (UCD)".
+ALIASES = {
+    "Persona": "شخصية المستخدم",
+    "Wireframe": "المخطط الهيكلي",
+    "UCD": "التصميم المتمحور حول المستخدم",
+}
+
 def term_match_code(term, concepts):
-    """Return concept index whose normalized title matches term, else None."""
+    """Return concept index whose normalized title matches term, else None.
+    Rules: explicit PDF-attested aliases, exact match, longest containment,
+    unique-token fallback. No same-lesson concept entry means None (reported,
+    never fabricated).
+    """
     nt = norm_term(term)
     ct = [(norm_term(t), i) for i, (t, _) in enumerate(concepts)]
+    if nt in ALIASES:
+        tgt = norm_term(ALIASES[nt])
+        for c, i in ct:
+            if c == tgt:
+                return i
+        return None
     for c, i in ct:
-        if nt == c or (len(nt) > 4 and nt in c) or (len(c) > 4 and c in nt):
+        if nt == c:
             return i
+    best = None
+    for c, i in ct:
+        if (len(nt) > 4 and nt in c) or (len(c) > 4 and c in nt):
+            if best is None or len(c) > len(ct[best][0]):
+                best = i
+    if best is not None:
+        return best
     tw = [w for w in nt.split() if len(w) >= 4]
-    for c, i in ct:
-        if any(w in c for w in tw):
-            return i
+    votes = {}
+    for w in tw:
+        holders = [i for c, i in ct if w in c]
+        if len(holders) == 1:
+            votes[holders[0]] = votes.get(holders[0], 0) + 1
+    if votes:
+        return max(votes, key=lambda i: (votes[i], len(ct[i][0])))
     return None
 
 AR_STOP = set("""من في على إلى أن إن أو و ثم قد لا لم لن ما ماذا كيف هل هذا هذه ذلك تلك الذي التي الذين اللواتي بما فيما عما كما لكن بل حتى إذا إذ عندما بين غير دون مع عن عند لدى كل بعض أي كلها نفسه نفسها يتم تكون يكون كانت ليست ليس هناك هنا ثم أيضا أيض كما وقد فإن أنه أنها لهم لها به بها فيه فيها عليه عليها والذي والتي وهو وهي هم هن نحن أنت أنتم ذلك هناك ثم""".split())
@@ -195,6 +225,7 @@ s2 = []
 for gtitle, gkind, gkey, qs in HGROUPS:
     gid = gid_of(gkind, gkey)
     nmcq = sum(1 for q in qs if q["kind"] == "mcq" and q["qid"] in gradeable)
+    nman = sum(1 for q in qs if q["kind"] == "mcq" and q["qid"] not in gradeable)
     ness = sum(1 for q in qs if q["kind"] == "essay")
     cards = []
     for q in qs:
@@ -203,13 +234,23 @@ for gtitle, gkind, gkey, qs in HGROUPS:
                 f"""<label class="opt"><input type="radio" name="{esc(q['qid'])}" value="{i}"><span class="ol">{LETTERS[i]}</span><span>{esc(o)}</span></label>"""
                 for i, o in enumerate(q["opts"]))
             inner = f"<div class='opts' data-qid='{esc(q['qid'])}'>{opts}</div>"
+            manual = "" if q["qid"] in gradeable else "<span class='mtag'>مراجعة يدوية</span>"
         else:
             inner = f"<textarea data-qid='{esc(q['qid'])}' rows='4' placeholder='اكتب إجابتك هنا'></textarea>"
+            manual = ""
         cards.append(f"""<div class="card q" data-unit="{esc(unit_of(q))}" data-hgroup="{esc(gid)}" data-search="{esc(q['text'])}">
-<div class="qhead"><span class="qid">{esc(q['qid'])}</span><span class="ktag">{KIND_AR[q['kind']]}</span><span class="ltag">الدرس {esc(q['lesson'])}</span></div>
+<div class="qhead"><span class="qid">{esc(q['qid'])}</span><span class="ktag">{KIND_AR[q['kind']]}</span><span class="ltag">الدرس {esc(q['lesson'])}</span>{manual}</div>
 <p class="qtext">{esc(q['text'])}</p>{inner}
+<button class='revealBtn' data-qid='{esc(q['qid'])}' type='button'>عرض الإجابة</button>
+<div class='reveal' data-reveal='{esc(q['qid'])}' hidden></div>
 </div>""")
-    s2.append(f"<h3 class='grp' data-hgroup-head='{esc(gid)}'>{esc(gtitle)} <span class='cnt'>({len(qs)})</span></h3>\n" + "\n".join(cards))
+    grade_btn = ""
+    if nmcq:
+        grade_btn = (f"<button class='gradeBtn' data-hgroup='{esc(gid)}' type='button'>عرض الحل الصحيح لإجاباتي</button>"
+                     f"<button class='resetBtn' data-hgroup='{esc(gid)}' type='button'>مسح إجاباتي وإعادة المحاولة</button>"
+                     f"<span class='score' data-score='{esc(gid)}' data-graded='{nmcq}' data-manual='{nman}' data-essay='{ness}'></span>"
+                     f"<div class='enote'>التصحيح الآلي للاختيار من متعدد فقط ({nmcq} سؤالا)" + (f" — {nman} تحتاج مراجعة يدوية" if nman else "") + f" — المقالية ({ness}) للمذاكرة الذاتية.</div>")
+    s2.append(f"<section class='hgroup' data-hgroup='{esc(gid)}'><h3 class='grp' data-hgroup-head='{esc(gid)}'>{esc(gtitle)} <span class='cnt'>({len(qs)})</span><br>{grade_btn}</h3>\n" + "\n".join(cards) + "\n</section>")
 SEC2 = "\n".join(s2)
 
 # ---------- Section 3 (mirrors Section 2, MCQ justifications) ----------
@@ -255,7 +296,7 @@ for gtitle, gkind, gkey, qs in HGROUPS:
 <p class="qtext">{esc(q['text'])}</p>
 <div class="ans"><b>نموذج الإجابة:</b> {ans_show}</div>
 <div class="ev"><b>الدليل:</b> {esc(q['evidence'])}</div></div>""")
-    s3.append(f"<h3 class='grp' data-hgroup-head='{esc(gid)}'>{esc(gtitle)} <span class='cnt'>({len(qs)})</span></h3>\n" + "\n".join(cards))
+    s3.append(f"<section class='hgroup' data-hgroup='{esc(gid)}'><h3 class='grp' data-hgroup-head='{esc(gid)}'>{esc(gtitle)} <span class='cnt'>({len(qs)})</span></h3>\n" + "\n".join(cards) + "\n</section>")
 SEC3 = "\n".join(s3)
 
 # ---------- answers.js (correctness data, read only on grade click) ----------
@@ -373,6 +414,17 @@ main{max-width:1000px;margin:auto;padding:1rem}
 section{background:var(--card);border:1px solid var(--line);border-radius:8px;padding:1rem;margin-bottom:1.5rem}
 h2.sec{border-right:4px solid var(--accent);padding-right:.6rem;margin-top:0}
 h3.grp{background:var(--accent-soft);border:1px solid var(--line);padding:.4rem .8rem;border-radius:6px}
+section.hgroup{padding:.8rem}
+section.hgroup>h3.grp{margin-top:0}
+.mtag{background:var(--warn-bg);border:1px solid var(--warn-line);border-radius:4px;padding:.05rem .6rem;font-size:.8rem}
+.revealBtn{font-family:inherit;font-size:.88rem;background:var(--card);color:var(--accent);border:1px solid var(--accent);border-radius:6px;padding:.25rem .9rem;cursor:pointer;margin-top:.4rem}
+.reveal{display:grid;grid-template-rows:0fr;opacity:0}
+.reveal.open{grid-template-rows:1fr;opacity:1}
+.reveal>div{overflow:hidden}
+.revealBody{background:var(--ans-bg);border:1px solid var(--ans-line);border-radius:6px;padding:.5rem .8rem;margin-top:.4rem}
+.revealBody .why{margin-top:.4rem}
+.revealBody .why ul{margin:.3rem 0;padding-right:1.2rem}
+.hint{font-size:.85rem;color:var(--muted);margin-top:.3rem}
 .card{border:1px solid var(--line);border-radius:6px;padding:.7rem;margin:.7rem 0;background:var(--card)}
 /* ---- Premium Section 1 (الشرح): readability-first lesson cards ---- */
 #sec1 details.lesson{margin:.9rem 0;border-radius:10px;box-shadow:0 1px 3px rgba(0,0,0,.06)}
@@ -422,6 +474,10 @@ textarea{width:100%;border:1px solid var(--line);border-radius:6px;padding:.5rem
 .note{background:var(--warn-bg);border:1px solid var(--warn-line);border-radius:6px;padding:.6rem 1rem;margin-bottom:1rem}
 .cnt{color:var(--muted);font-size:.9rem}
 .der{background:var(--warn-bg);border:1px solid var(--warn-line);border-radius:4px;padding:.05rem .6rem;font-size:.8rem}
+.gradeBtn{font-family:inherit;font-size:.9rem;background:var(--accent);color:var(--accent-ink);border:1px solid var(--accent);border-radius:6px;padding:.3rem .9rem;cursor:pointer;margin-top:.4rem}
+.resetBtn{font-family:inherit;font-size:.9rem;background:var(--card);color:var(--ink);border:1px solid var(--line);border-radius:6px;padding:.3rem .9rem;cursor:pointer;margin-top:.4rem;margin-right:.4rem}
+.score{font-size:.9rem;color:var(--muted);margin-right:.6rem}
+.enote{font-size:.82rem;color:var(--muted)}
 @media(max-width:640px){main{padding:.5rem}section{padding:.6rem}#sec1 details.lesson .body{font-size:1rem;padding:.2rem .6rem .7rem}}
 @media print{#sidebar,#burger,#overlay,.toolbar{display:none}.view:not(.on){display:none}.view.on{display:block}details.lesson{break-inside:avoid}}"""
 
@@ -620,9 +676,13 @@ HTML = f"""<!DOCTYPE html>
 <div id="sec3" class="view" hidden><section><h2 class="sec">القسم الثالث — الإجابات النموذجية</h2>{SEC3}</section></div>
 </main>
 <footer class="srcs">{FOOTER}</footer>
+<script src="assets/js/answers.js"></script>
+<script src="assets/js/stopwords.js"></script>
 <script src="assets/js/views.js"></script>
 <script src="assets/js/storage.js"></script>
 <script src="assets/js/filter.js"></script>
+<script src="assets/js/grade.js"></script>
+<script src="assets/js/reveal.js"></script>
 <script src="assets/js/main.js"></script>
 </body></html>"""
 
@@ -636,13 +696,17 @@ for bad in ["تكميلي", "class=\"src\"", ".pdf", "Programming-ArtificialInte
 # standalone source label only (التحيز الخوارزمي is a lesson term, allowed)
 assert not re.search(r'(?<!التحيز )الخوارزمي', sec2_region), "LABEL LEAK: standalone الخوارزمي in section 2"
 assert 'المصدر:' not in sec2_region, "source line in section 2"
-# PHASE 1 quarantine: zero grading/reveal UI in Section 2
-assert "resetBtn" not in sec2_region, "resetBtn leaked into section 2"
-assert "gradeBtn" not in sec2_region, "gradeBtn leaked into section 2"
-assert "revealBtn" not in sec2_region, "revealBtn leaked into section 2"
-assert "data-reveal=" not in sec2_region, "reveal panel leaked into section 2"
-assert "data-score=" not in sec2_region, "score span leaked into section 2"
-assert "enote" not in sec2_region, "enote leaked into section 2"
+# Restored grading/reveal UI in Section 2 (per-group scoped)
+assert sec2_region.count("resetBtn") == 15, sec2_region.count("resetBtn")
+assert sec2_region.count("gradeBtn") == 15, sec2_region.count("gradeBtn")
+assert sec2_region.count("revealBtn") == 357, sec2_region.count("revealBtn")
+assert sec2_region.count("data-reveal=") == 357, sec2_region.count("data-reveal=")
+# hierarchy containers: one per group in each section
+assert SEC2.count("<section class='hgroup'") == 15, SEC2.count("<section class='hgroup'")
+assert SEC3.count("<section class='hgroup'") == 15, SEC3.count("<section class='hgroup'")
+sec2_gids = set(re.findall(r"<section class='hgroup' data-hgroup='([^']+)'", SEC2))
+sec3_gids = set(re.findall(r"<section class='hgroup' data-hgroup='([^']+)'", SEC3))
+assert sec2_gids == sec3_gids and len(sec2_gids) == 15, (sec2_gids, sec3_gids)
 # Section 2 carries no model-answer content
 for bad in ["لماذا هي صحيحة", "لماذا الباقي خطأ", "كلمات مشتركة"]:
     assert bad not in sec2_region, f"ANSWER LEAK: {bad} in section 2"
@@ -653,9 +717,14 @@ assert FOOTER in HTML and 'class="srcs"' in HTML, "footer missing"
 # footer carries the only attribution; no PDF/تكميلي labels anywhere visible
 for bad in ["Programming-ArtificialIntelligence", "mragaa", "Examify"]:
     assert bad not in HTML, f"FILENAME LEAK: {bad}"
-# PHASE 1: grade/reveal logic quarantined on disk (see assets/js/grade.js + reveal.js)
-# but detached from the page. These asserts pin the quarantine, not behavior.
+# Restored grading/reveal logic (assets/js/grade.js + reveal.js regenerated + referenced)
 assert "هل أنت متأكد من مسح إجابات هذا القسم؟" in JS_GRADE, "reset confirm missing"
+assert "bacai:m:" in JS_GRADE and "bacai:e:" in JS_GRADE, "reset keys missing"
+assert "bacai:theme" not in JS_GRADE, "reset touches theme key"
+assert "sec3" not in JS_GRADE.lower() and "scroll" not in JS_GRADE.lower(), "grade escapes group"
+assert "fetch(" not in JS_GRADE and "fetch(" not in JS_STORAGE and "fetch(" not in JS_FILTER and "fetch(" not in JS_REVEAL, "network call found"
+assert "ANSWERS" not in JS_REVEAL and "REASONS" not in JS_REVEAL, "reveal leaks answer data"
+assert "var AR_STOP" not in JS_REVEAL, "stopwords data must load from stopwords.js"
 assert "content-visibility" in CSS and "prefers-reduced-motion" in CSS, "perf/motion CSS missing"
 assert "setTimeout(filt, 150)" in JS_FILTER, "debounce missing"
 assert "sec2" in JS_STORAGE and "addEventListener('change'" in JS_STORAGE, "delegation missing"
@@ -670,14 +739,13 @@ assert sec2_region.count('type="radio"') == sum(len(q["opts"]) for q in ALLQ if 
 assert sec2_region.count("<textarea") == sum(1 for q in ALLQ if q["kind"] == "essay")
 # split-file structure, no inline code, no CDN
 assert "<style>" not in HTML and "<script>" not in HTML, "inline style/script found"
-for ref in ['href="assets/css/styles.css"',
+for ref in ['href="assets/css/styles.css"', 'src="assets/js/answers.js"',
+            'src="assets/js/stopwords.js"',
             'src="assets/js/views.js"', 'src="assets/js/storage.js"',
-            'src="assets/js/filter.js"',
+            'src="assets/js/filter.js"', 'src="assets/js/grade.js"',
+            'src="assets/js/reveal.js"',
             'src="assets/js/main.js"']:
     assert ref in HTML, f"missing asset ref {ref}"
-for ref in ['src="assets/js/answers.js"', 'src="assets/js/stopwords.js"',
-            'src="assets/js/grade.js"', 'src="assets/js/reveal.js"']:
-    assert ref not in HTML, f"quarantined script ref leaked: {ref}"
 assert 'onclick=' not in HTML, "inline handler found"
 assert "bacai:m:" in JS_STORAGE and "bacai:e:" in JS_STORAGE, "storage keys changed"
 assert "getElementById('uf')" in JS_FILTER and "getElementById('s')" in JS_FILTER
@@ -702,15 +770,13 @@ os.makedirs(f"{BASE}/assets/css", exist_ok=True)
 os.makedirs(f"{BASE}/assets/js", exist_ok=True)
 open(f"{BASE}/index.html", "w", encoding="utf-8").write(HTML)
 open(f"{BASE}/assets/css/styles.css", "w", encoding="utf-8").write(CSS)
-# PHASE 1: answers/stopwords/grade/reveal JS stay on disk from previous builds
-# but are NOT regenerated and NOT referenced. Writers kept commented for Phase 2.
-# open(f"{BASE}/assets/js/answers.js", "w", encoding="utf-8").write(ANS_JS)
-# open(f"{BASE}/assets/js/stopwords.js", "w", encoding="utf-8").write(STOPWORDS_JS)
+open(f"{BASE}/assets/js/answers.js", "w", encoding="utf-8").write(ANS_JS)
+open(f"{BASE}/assets/js/stopwords.js", "w", encoding="utf-8").write(STOPWORDS_JS)
 open(f"{BASE}/assets/js/views.js", "w", encoding="utf-8").write(JS_VIEWS)
 open(f"{BASE}/assets/js/storage.js", "w", encoding="utf-8").write(JS_STORAGE)
 open(f"{BASE}/assets/js/filter.js", "w", encoding="utf-8").write(JS_FILTER)
-# open(f"{BASE}/assets/js/grade.js", "w", encoding="utf-8").write(JS_GRADE)
-# open(f"{BASE}/assets/js/reveal.js", "w", encoding="utf-8").write(JS_REVEAL)
+open(f"{BASE}/assets/js/grade.js", "w", encoding="utf-8").write(JS_GRADE)
+open(f"{BASE}/assets/js/reveal.js", "w", encoding="utf-8").write(JS_REVEAL)
 open(f"{BASE}/assets/js/main.js", "w", encoding="utf-8").write(JS_MAIN)
 print("OK lessons=14 totalQ=357 mcq=%d essay=%d gradeable=%d" % (
     sum(1 for q in ALLQ if q["kind"] == "mcq"),

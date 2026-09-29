@@ -56,6 +56,17 @@ main{max-width:1000px;margin:auto;padding:1rem}
 section{background:var(--card);border:1px solid var(--line);border-radius:8px;padding:1rem;margin-bottom:1.5rem}
 h2.sec{border-right:4px solid var(--accent);padding-right:.6rem;margin-top:0}
 h3.grp{background:var(--accent-soft);border:1px solid var(--line);padding:.4rem .8rem;border-radius:6px}
+section.hgroup{padding:.8rem}
+section.hgroup>h3.grp{margin-top:0}
+.mtag{background:var(--warn-bg);border:1px solid var(--warn-line);border-radius:4px;padding:.05rem .6rem;font-size:.8rem}
+.revealBtn{font-family:inherit;font-size:.88rem;background:var(--card);color:var(--accent);border:1px solid var(--accent);border-radius:6px;padding:.25rem .9rem;cursor:pointer;margin-top:.4rem}
+.reveal{display:grid;grid-template-rows:0fr;opacity:0}
+.reveal.open{grid-template-rows:1fr;opacity:1}
+.reveal>div{overflow:hidden}
+.revealBody{background:var(--ans-bg);border:1px solid var(--ans-line);border-radius:6px;padding:.5rem .8rem;margin-top:.4rem}
+.revealBody .why{margin-top:.4rem}
+.revealBody .why ul{margin:.3rem 0;padding-right:1.2rem}
+.hint{font-size:.85rem;color:var(--muted);margin-top:.3rem}
 .card{border:1px solid var(--line);border-radius:6px;padding:.7rem;margin:.7rem 0;background:var(--card)}
 /* ---- Premium Section 1 (الشرح): readability-first lesson cards ---- */
 #sec1 details.lesson{margin:.9rem 0;border-radius:10px;box-shadow:0 1px 3px rgba(0,0,0,.06)}
@@ -105,5 +116,9 @@ textarea{width:100%;border:1px solid var(--line);border-radius:6px;padding:.5rem
 .note{background:var(--warn-bg);border:1px solid var(--warn-line);border-radius:6px;padding:.6rem 1rem;margin-bottom:1rem}
 .cnt{color:var(--muted);font-size:.9rem}
 .der{background:var(--warn-bg);border:1px solid var(--warn-line);border-radius:4px;padding:.05rem .6rem;font-size:.8rem}
+.gradeBtn{font-family:inherit;font-size:.9rem;background:var(--accent);color:var(--accent-ink);border:1px solid var(--accent);border-radius:6px;padding:.3rem .9rem;cursor:pointer;margin-top:.4rem}
+.resetBtn{font-family:inherit;font-size:.9rem;background:var(--card);color:var(--ink);border:1px solid var(--line);border-radius:6px;padding:.3rem .9rem;cursor:pointer;margin-top:.4rem;margin-right:.4rem}
+.score{font-size:.9rem;color:var(--muted);margin-right:.6rem}
+.enote{font-size:.82rem;color:var(--muted)}
 @media(max-width:640px){main{padding:.5rem}section{padding:.6rem}#sec1 details.lesson .body{font-size:1rem;padding:.2rem .6rem .7rem}}
 @media print{#sidebar,#burger,#overlay,.toolbar{display:none}.view:not(.on){display:none}.view.on{display:block}details.lesson{break-inside:avoid}}
