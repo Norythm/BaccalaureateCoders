@@ -4,7 +4,12 @@
   document.querySelectorAll('#sec2 input[type=radio]').forEach(function (r) {
     var k = P + 'm:' + r.name;
     try { if (localStorage.getItem(k) === r.value) r.checked = true; } catch (e) {}
-    r.addEventListener('change', function () { try { localStorage.setItem(k, r.value); } catch (e) {} });
+    r.addEventListener('change', function () {
+      try { localStorage.setItem(k, r.value); } catch (e) {}
+      var card = r.closest('.card.q');
+      if (card) card.querySelectorAll('.opt').forEach(function (o) { o.classList.remove('ok', 'bad'); });
+      var sc = card ? card.closest('.view').querySelector('.score[data-score]') : null;
+    });
   });
   document.querySelectorAll('#sec2 textarea').forEach(function (t) {
     var k = P + 'e:' + t.dataset.qid;
