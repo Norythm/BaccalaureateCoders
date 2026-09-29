@@ -22,6 +22,10 @@
     });
   }
   uf.addEventListener('change', filt);
-  sf.addEventListener('input', filt);
+  var deb = null;
+  sf.addEventListener('input', function () {
+    if (deb) clearTimeout(deb);
+    deb = setTimeout(filt, 150);
+  });
   window.__refilter = filt;
 })();

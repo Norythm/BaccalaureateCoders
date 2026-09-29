@@ -20,7 +20,12 @@
         if (checked && !ok) checked.closest('.opt').classList.add('bad');
       });
       var sc = scope.querySelector('.score[data-score="' + gid + '"]');
-      if (sc) sc.textContent = total ? ('النتيجة: ' + right + ' / ' + total) : 'لا أسئلة اختيار قابلة للتصحيح في هذه المجموعة.';
+      if (sc) {
+        var man = parseInt(sc.dataset.manual || '0', 10);
+        var txt = total ? ('النتيجة: ' + right + ' / ' + total) : 'لا أسئلة اختيار قابلة للتصحيح في هذه المجموعة.';
+        if (man) txt += ' (+' + man + ' تحتاج مراجعة يدوية — افتح عرض الإجابة تحت كل سؤال)';
+        sc.textContent = txt;
+      }
     });
   });
   // Scoped reset: clears only this data-hgroup (bacai:m:/bacai:e:), theme key untouched
