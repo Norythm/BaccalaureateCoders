@@ -27,7 +27,10 @@ def esc(s):
     return html.escape(str(s), quote=True)
 
 def strip_label(opt):
-    t = re.sub(r'^\s*[أبجدهـوزح]\s*[\)\.\-:：]?\s*', '', str(opt).strip())
+    # Strip a leading option letter ONLY when followed by a separator
+    # (punctuation or whitespace). Bare words starting with ب/أ/… (e.g. بداية، بيع)
+    # must be left intact.
+    t = re.sub(r'^\s*[أبجدهـوزح](?:\s*[\)\.\-:]|\s+|$)\s*', '', str(opt).strip())
     return t if t else str(opt).strip()
 
 def norm_term(s):
