@@ -439,11 +439,11 @@ body{margin:0;background:var(--paper);color:var(--ink);line-height:1.9;font-fami
 header{background:var(--card);border-bottom:1px solid var(--line);padding:1.2rem 3.2rem 1.2rem 1rem;text-align:center}
 header h1{margin:0 0 .3rem;font-size:1.35rem}
 header .sub{color:var(--muted);font-size:.95rem}
-#burger{position:absolute;top:.9rem;right:.9rem;font-size:1.3rem;line-height:1;background:var(--card);color:var(--ink);border:1px solid var(--line);border-radius:6px;padding:.35rem .7rem;cursor:pointer;font-family:inherit}
+#burger{position:absolute;top:.9rem;right:.9rem;z-index:21;font-size:1.3rem;line-height:1;background:var(--card);color:var(--ink);border:1px solid var(--line);border-radius:6px;padding:.35rem .7rem;cursor:pointer;font-family:inherit}
 #overlay{position:fixed;inset:0;background:rgba(0,0,0,.35);z-index:19}
 #overlay[hidden]{display:none}
-#sidebar{position:fixed;top:0;right:0;height:100%;width:250px;background:var(--card);border-left:1px solid var(--line);z-index:20;padding:1rem;display:flex;flex-direction:column;gap:.6rem}
-#sidebar[hidden]{display:none}
+#sidebar{position:fixed;top:0;right:0;height:100%;width:250px;background:var(--card);border-left:1px solid var(--line);z-index:20;padding:1rem;display:flex;flex-direction:column;gap:.6rem;transform:translateX(0)}
+body.sb-collapsed #sidebar{transform:translateX(100%)}
 #sidebar h2{margin:0 0 .4rem;font-size:1.05rem}
 #sidebar button{font-family:inherit;font-size:1rem;text-align:right;background:var(--paper);color:var(--ink);border:1px solid var(--line);border-radius:6px;padding:.5rem .8rem;cursor:pointer}
 #sidebar button.on{background:var(--accent);border-color:var(--accent);color:var(--accent-ink)}
@@ -492,6 +492,7 @@ footer.srcs{background:var(--card);border-top:1px solid var(--line);color:var(--
 @media(max-width:640px){main{padding:.5rem}section{padding:.6rem}}
 @media print{#sidebar,#burger,#overlay,.toolbar{display:none}.view:not(.on){display:none}.view.on{display:block}details.lesson{break-inside:avoid}}
 @media (prefers-reduced-motion:no-preference){
+#sidebar{transition:transform .2s ease-out}
 .reveal{transition:grid-template-rows .18s ease-out,opacity .18s ease-out}
 li:target{transition:background .3s ease-out}
 button:active{transform:scale(.98)}
@@ -522,17 +523,33 @@ textarea{width:100%;border:1px solid var(--line);border-radius:6px;padding:.5rem
 @media(max-width:640px){main{padding:.5rem}section{padding:.6rem}#sec1 details.lesson .body{font-size:1rem;padding:.2rem .6rem .7rem}}
 @media print{#sidebar,#burger,#overlay,.toolbar{display:none}.view:not(.on){display:none}.view.on{display:block}details.lesson{break-inside:avoid}}"""
 
-JS_VIEWS = """// SPA views: sidebar switching, hamburger, hash deep-link, mobile drawer
+JS_VIEWS = """// SPA views: sidebar switching, hamburger, hash deep-link, mobile drawer.
+// Sidebar collapses via body.sb-collapsed (slide animation); state in bacai:sb.
 (function () {
   var links = Array.prototype.slice.call(document.querySelectorAll('#sidebar button[data-view]'));
   var views = { 'الشرح': 'sec1', 'الأسئلة': 'sec2', 'الإجابات': 'sec3' };
   var burger = document.getElementById('burger');
   var sidebar = document.getElementById('sidebar');
   var overlay = document.getElementById('overlay');
-  function openSb() { sidebar.removeAttribute('hidden'); overlay.removeAttribute('hidden'); }
-  function closeSb() { if (window.innerWidth <= 640) { sidebar.setAttribute('hidden', ''); overlay.setAttribute('hidden', ''); } }
+  function isMobile() { return window.innerWidth <= 640; }
+  function isCollapsed() { return document.body.classList.contains('sb-collapsed'); }
+  function setCollapsed(collapsed, persist) {
+    document.body.classList.toggle('sb-collapsed', collapsed);
+    if (isMobile()) {
+      if (collapsed) overlay.setAttribute('hidden', '');
+      else overlay.removeAttribute('hidden');
+    } else {
+      overlay.setAttribute('hidden', '');
+    }
+    if (persist !== false) { try { localStorage.setItem('bacai:sb', collapsed ? 'closed' : 'open'); } catch (e) {} }
+  }
+  function openSb() { setCollapsed(false); }
+  function closeSb() { setCollapsed(true); }
+  try {
+    if (localStorage.getItem('bacai:sb') === 'closed') setCollapsed(true, false);
+  } catch (e) {}
   burger.addEventListener('click', function () {
-    if (sidebar.hasAttribute('hidden')) openSb(); else closeSb();
+    setCollapsed(!isCollapsed());
   });
   overlay.addEventListener('click', closeSb);
   document.addEventListener('keydown', function (e) { if (e.key === 'Escape') closeSb(); });
@@ -545,9 +562,9 @@ JS_VIEWS = """// SPA views: sidebar switching, hamburger, hash deep-link, mobile
       if (on) el.removeAttribute('hidden'); else el.setAttribute('hidden', '');
     });
     if (push !== false) { try { location.hash = name; } catch (e) {} }
-    if (window.innerWidth > 640) { sidebar.removeAttribute('hidden'); overlay.setAttribute('hidden', ''); }
+    overlay.setAttribute('hidden', '');
   }
-  links.forEach(function (b) { b.addEventListener('click', function () { show(b.dataset.view); closeSb(); }); });
+  links.forEach(function (b) { b.addEventListener('click', function () { show(b.dataset.view); if (isMobile()) closeSb(); }); });
   window.addEventListener('hashchange', function () {
     var h = (location.hash || '').replace('#', '');
     if (views[decodeURIComponent(h)]) show(decodeURIComponent(h), false);
@@ -768,6 +785,10 @@ assert "fetch(" not in JS_GRADE and "fetch(" not in JS_STORAGE and "fetch(" not 
 assert "ANSWERS" not in JS_REVEAL and "REASONS" not in JS_REVEAL, "reveal leaks answer data"
 assert "var AR_STOP" not in JS_REVEAL, "stopwords data must load from stopwords.js"
 assert "content-visibility" in CSS and "prefers-reduced-motion" in CSS, "perf/motion CSS missing"
+assert "body.sb-collapsed #sidebar" in CSS and "translateX(100%)" in CSS, "sidebar slide CSS missing"
+assert "#sidebar{transition:transform .2s ease-out" in CSS.replace(" ", "").replace("\n", "") or "#sidebar{transition:transform" in CSS.replace(" ", ""), "sidebar transition missing"
+assert "bacai:sb" in JS_VIEWS, "sidebar persistence missing"
+assert "bacai:m:" not in JS_VIEWS and "bacai:e:" not in JS_VIEWS and "bacai:theme" not in JS_VIEWS, "views touches answer/theme keys"
 assert "setTimeout(filt, 150)" in JS_FILTER, "debounce missing"
 assert "sec2" in JS_STORAGE and "addEventListener('change'" in JS_STORAGE, "delegation missing"
 sec2_qids = set(re.findall(r"data-qid='([^']+)'", sec2_region))

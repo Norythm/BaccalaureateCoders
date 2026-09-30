@@ -40,11 +40,11 @@ body{margin:0;background:var(--paper);color:var(--ink);line-height:1.9;font-fami
 header{background:var(--card);border-bottom:1px solid var(--line);padding:1.2rem 3.2rem 1.2rem 1rem;text-align:center}
 header h1{margin:0 0 .3rem;font-size:1.35rem}
 header .sub{color:var(--muted);font-size:.95rem}
-#burger{position:absolute;top:.9rem;right:.9rem;font-size:1.3rem;line-height:1;background:var(--card);color:var(--ink);border:1px solid var(--line);border-radius:6px;padding:.35rem .7rem;cursor:pointer;font-family:inherit}
+#burger{position:absolute;top:.9rem;right:.9rem;z-index:21;font-size:1.3rem;line-height:1;background:var(--card);color:var(--ink);border:1px solid var(--line);border-radius:6px;padding:.35rem .7rem;cursor:pointer;font-family:inherit}
 #overlay{position:fixed;inset:0;background:rgba(0,0,0,.35);z-index:19}
 #overlay[hidden]{display:none}
-#sidebar{position:fixed;top:0;right:0;height:100%;width:250px;background:var(--card);border-left:1px solid var(--line);z-index:20;padding:1rem;display:flex;flex-direction:column;gap:.6rem}
-#sidebar[hidden]{display:none}
+#sidebar{position:fixed;top:0;right:0;height:100%;width:250px;background:var(--card);border-left:1px solid var(--line);z-index:20;padding:1rem;display:flex;flex-direction:column;gap:.6rem;transform:translateX(0)}
+body.sb-collapsed #sidebar{transform:translateX(100%)}
 #sidebar h2{margin:0 0 .4rem;font-size:1.05rem}
 #sidebar button{font-family:inherit;font-size:1rem;text-align:right;background:var(--paper);color:var(--ink);border:1px solid var(--line);border-radius:6px;padding:.5rem .8rem;cursor:pointer}
 #sidebar button.on{background:var(--accent);border-color:var(--accent);color:var(--accent-ink)}
@@ -93,6 +93,7 @@ footer.srcs{background:var(--card);border-top:1px solid var(--line);color:var(--
 @media(max-width:640px){main{padding:.5rem}section{padding:.6rem}}
 @media print{#sidebar,#burger,#overlay,.toolbar{display:none}.view:not(.on){display:none}.view.on{display:block}details.lesson{break-inside:avoid}}
 @media (prefers-reduced-motion:no-preference){
+#sidebar{transition:transform .2s ease-out}
 .reveal{transition:grid-template-rows .18s ease-out,opacity .18s ease-out}
 li:target{transition:background .3s ease-out}
 button:active{transform:scale(.98)}

@@ -1,14 +1,30 @@
-// SPA views: sidebar switching, hamburger, hash deep-link, mobile drawer
+// SPA views: sidebar switching, hamburger, hash deep-link, mobile drawer.
+// Sidebar collapses via body.sb-collapsed (slide animation); state in bacai:sb.
 (function () {
   var links = Array.prototype.slice.call(document.querySelectorAll('#sidebar button[data-view]'));
   var views = { 'الشرح': 'sec1', 'الأسئلة': 'sec2', 'الإجابات': 'sec3' };
   var burger = document.getElementById('burger');
   var sidebar = document.getElementById('sidebar');
   var overlay = document.getElementById('overlay');
-  function openSb() { sidebar.removeAttribute('hidden'); overlay.removeAttribute('hidden'); }
-  function closeSb() { if (window.innerWidth <= 640) { sidebar.setAttribute('hidden', ''); overlay.setAttribute('hidden', ''); } }
+  function isMobile() { return window.innerWidth <= 640; }
+  function isCollapsed() { return document.body.classList.contains('sb-collapsed'); }
+  function setCollapsed(collapsed, persist) {
+    document.body.classList.toggle('sb-collapsed', collapsed);
+    if (isMobile()) {
+      if (collapsed) overlay.setAttribute('hidden', '');
+      else overlay.removeAttribute('hidden');
+    } else {
+      overlay.setAttribute('hidden', '');
+    }
+    if (persist !== false) { try { localStorage.setItem('bacai:sb', collapsed ? 'closed' : 'open'); } catch (e) {} }
+  }
+  function openSb() { setCollapsed(false); }
+  function closeSb() { setCollapsed(true); }
+  try {
+    if (localStorage.getItem('bacai:sb') === 'closed') setCollapsed(true, false);
+  } catch (e) {}
   burger.addEventListener('click', function () {
-    if (sidebar.hasAttribute('hidden')) openSb(); else closeSb();
+    setCollapsed(!isCollapsed());
   });
   overlay.addEventListener('click', closeSb);
   document.addEventListener('keydown', function (e) { if (e.key === 'Escape') closeSb(); });
@@ -21,9 +37,9 @@
       if (on) el.removeAttribute('hidden'); else el.setAttribute('hidden', '');
     });
     if (push !== false) { try { location.hash = name; } catch (e) {} }
-    if (window.innerWidth > 640) { sidebar.removeAttribute('hidden'); overlay.setAttribute('hidden', ''); }
+    overlay.setAttribute('hidden', '');
   }
-  links.forEach(function (b) { b.addEventListener('click', function () { show(b.dataset.view); closeSb(); }); });
+  links.forEach(function (b) { b.addEventListener('click', function () { show(b.dataset.view); if (isMobile()) closeSb(); }); });
   window.addEventListener('hashchange', function () {
     var h = (location.hash || '').replace('#', '');
     if (views[decodeURIComponent(h)]) show(decodeURIComponent(h), false);
