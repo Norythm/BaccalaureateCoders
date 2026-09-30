@@ -148,6 +148,9 @@ def unit_of(q):
     return UNIT_OF.get(q["lesson"], "?")
 
 # ---------- hierarchical regroup ----------
+# REVIEW_ONLY=True: Sections 2-3 show ONLY the 82 Unit-1 review-bank questions.
+# Revert to False to restore the full 357-question build (book + Khawarizmi).
+REVIEW_ONLY = True
 # 14 lesson groups (lesson field) + 1 unit group (Unit 1 review banks) .
 # Scan found zero cross-unit and zero unit-comprehensive questions
 # (5 keyword hits were false positives), so Units 2-4 unit groups and the
@@ -166,18 +169,56 @@ for q in RAW:
         ambiguous.append(q["qid"])
 assert not ambiguous, ambiguous
 
-HGROUPS = []
-for c in ORDER:
-    qs = by_lesson[c]
-    HGROUPS.append((f"أسئلة الدرس {c}", "lesson", c, qs))
-HGROUPS.append(("أسئلة الوحدة الأولى", "unit", "1", unit1_review))
+def mcq_first(qs):
+    return [q for q in qs if q["kind"] == "mcq"] + [q for q in qs if q["kind"] == "essay"]
+
+if REVIEW_ONLY:
+    # 4 lesson groups from review banks only (MCQ first, then essay)
+    HGROUPS = []
+    for c in ["1-1", "1-2", "1-3", "1-4"]:
+        qs = mcq_first([q for q in unit1_review if q["lesson"] == c])
+        HGROUPS.append((f"أسئلة الدرس {c}", "lesson", c, qs))
+    # cumulative: duplicates with -cum IDs, round-robin interleaved across
+    # lessons 1-1 -> 1-2 -> 1-3 -> 1-4 (each lesson list MCQ-first), deterministic
+    pools = {}
+    for c in ["1-1", "1-2", "1-3", "1-4"]:
+        pools[c] = mcq_first([q for q in unit1_review if q["lesson"] == c])
+    cum = []
+    idx = {c: 0 for c in pools}
+    while any(idx[c] < len(pools[c]) for c in pools):
+        for c in ["1-1", "1-2", "1-3", "1-4"]:
+            if idx[c] < len(pools[c]):
+                src = pools[c][idx[c]]
+                idx[c] += 1
+                dup = dict(src)
+                dup["qid"] = src["qid"] + "-cum"
+                cum.append(dup)
+    HGROUPS.append(("أسئلة متراكمة على الوحدة الأولى", "cum", "u1", cum))
+else:
+    HGROUPS = []
+    for c in ORDER:
+        qs = by_lesson[c]
+        HGROUPS.append((f"أسئلة الدرس {c}", "lesson", c, qs))
+    HGROUPS.append(("أسئلة الوحدة الأولى", "unit", "1", unit1_review))
 
 n_h = sum(len(qs) for _, _, _, qs in HGROUPS)
-assert n_h == 357, n_h
+EXP_TOTAL = 164 if REVIEW_ONLY else 357
+assert n_h == EXP_TOTAL, n_h
 ALLQ = [q for _, _, _, qs in HGROUPS for q in qs]
+assert len({q["qid"] for q in ALLQ}) == EXP_TOTAL
+N_Q = len(ALLQ)
+N_MCQ = sum(1 for q in ALLQ if q["kind"] == "mcq")
+N_ESS = sum(1 for q in ALLQ if q["kind"] == "essay")
+SUB_SRC = "من بنكي المراجعة فقط" if REVIEW_ONLY else "من المستندات الأربعة فقط"
+
+def base_qid(qid):
+    return qid[:-4] if qid.endswith("-cum") else qid
+
+def just_of(q):
+    return JUST_ALL.get(base_qid(q["qid"]))
 
 # gradeable = mcq with resolved single correct index AND justification entry
-gradeable = {q["qid"] for q in ALLQ if q["kind"] == "mcq" and q["cidx"] is not None and q["qid"] in JUST_ALL}
+gradeable = {q["qid"] for q in ALLQ if q["kind"] == "mcq" and q["cidx"] is not None and just_of(q) is not None}
 n_grad_mcq = sum(1 for q in ALLQ if q["kind"] == "mcq" and q["qid"] in gradeable)
 print("gradeable MCQ: %d / %d" % (n_grad_mcq, sum(1 for q in ALLQ if q["kind"] == "mcq")))
 
@@ -260,8 +301,8 @@ for gtitle, gkind, gkey, qs in HGROUPS:
     gid = gid_of(gkind, gkey)
     cards = []
     for q in qs:
-        if q["kind"] == "mcq" and q["qid"] in JUST_ALL:
-            j = JUST_ALL[q["qid"]]
+        if q["kind"] == "mcq" and just_of(q) is not None:
+            j = just_of(q)
             why = j.get("why", "")
             wrongs = list(j.get("wrong", []))
             # align wrong clauses to distractor indices:
@@ -665,14 +706,14 @@ HTML = f"""<!DOCTYPE html>
 <button data-view="الإجابات">نموذج الإجابات</button>
 </aside>
 <header><h1>البرمجة والذكاء الاصطناعي — الصف الثاني بكالوريا (الترم الأول)</h1>
-<div class="sub">الشرح (14 درسا) • الأسئلة (357 سؤالا) • الإجابات النموذجية — من المستندات الأربعة فقط</div></header>
+<div class="sub">الشرح (14 درسا) • الأسئلة ({N_Q} سؤالا) • الإجابات النموذجية — {SUB_SRC}</div></header>
 <div class="toolbar">
 <select id="uf"><option value="all">كل الوحدات</option><option value="1">الوحدة 1</option><option value="2">الوحدة 2</option><option value="3">الوحدة 3</option><option value="4">الوحدة 4</option></select>
 <input id="s" placeholder="بحث في القسم الحالي..."><button id="themeBtn" type="button">الوضع الليلي</button><button id="printBtn" type="button">طباعة</button>
 </div>
 <main>
 <div id="sec1" class="view on"><section><h2 class="sec">القسم الأول — الشرح (14 درسا)</h2>{SEC1}</section></div>
-<div id="sec2" class="view" hidden><section><h2 class="sec">القسم الثاني — الأسئلة (357 سؤالا)</h2>{SEC2}</section></div>
+<div id="sec2" class="view" hidden><section><h2 class="sec">القسم الثاني — الأسئلة ({N_Q} سؤالا)</h2>{SEC2}</section></div>
 <div id="sec3" class="view" hidden><section><h2 class="sec">القسم الثالث — الإجابات النموذجية</h2>{SEC3}</section></div>
 </main>
 <footer class="srcs">{FOOTER}</footer>
@@ -697,16 +738,17 @@ for bad in ["تكميلي", "class=\"src\"", ".pdf", "Programming-ArtificialInte
 assert not re.search(r'(?<!التحيز )الخوارزمي', sec2_region), "LABEL LEAK: standalone الخوارزمي in section 2"
 assert 'المصدر:' not in sec2_region, "source line in section 2"
 # Restored grading/reveal UI in Section 2 (per-group scoped)
-assert sec2_region.count("resetBtn") == 15, sec2_region.count("resetBtn")
-assert sec2_region.count("gradeBtn") == 15, sec2_region.count("gradeBtn")
-assert sec2_region.count("revealBtn") == 357, sec2_region.count("revealBtn")
-assert sec2_region.count("data-reveal=") == 357, sec2_region.count("data-reveal=")
+EXP_GROUPS = 5 if REVIEW_ONLY else 15
+assert sec2_region.count("resetBtn") == EXP_GROUPS, sec2_region.count("resetBtn")
+assert sec2_region.count("gradeBtn") == EXP_GROUPS, sec2_region.count("gradeBtn")
+assert sec2_region.count("revealBtn") == N_Q, sec2_region.count("revealBtn")
+assert sec2_region.count("data-reveal=") == N_Q, sec2_region.count("data-reveal=")
 # hierarchy containers: one per group in each section
-assert SEC2.count("<section class='hgroup'") == 15, SEC2.count("<section class='hgroup'")
-assert SEC3.count("<section class='hgroup'") == 15, SEC3.count("<section class='hgroup'")
+assert SEC2.count("<section class='hgroup'") == EXP_GROUPS, SEC2.count("<section class='hgroup'")
+assert SEC3.count("<section class='hgroup'") == EXP_GROUPS, SEC3.count("<section class='hgroup'")
 sec2_gids = set(re.findall(r"<section class='hgroup' data-hgroup='([^']+)'", SEC2))
 sec3_gids = set(re.findall(r"<section class='hgroup' data-hgroup='([^']+)'", SEC3))
-assert sec2_gids == sec3_gids and len(sec2_gids) == 15, (sec2_gids, sec3_gids)
+assert sec2_gids == sec3_gids and len(sec2_gids) == EXP_GROUPS, (sec2_gids, sec3_gids)
 # Section 2 carries no model-answer content
 for bad in ["لماذا هي صحيحة", "لماذا الباقي خطأ", "كلمات مشتركة"]:
     assert bad not in sec2_region, f"ANSWER LEAK: {bad} in section 2"
@@ -731,7 +773,12 @@ assert "sec2" in JS_STORAGE and "addEventListener('change'" in JS_STORAGE, "dele
 sec2_qids = set(re.findall(r"data-qid='([^']+)'", sec2_region))
 sec3_qids = set(re.findall(r'<span class="qid">([^<]+)</span>', SEC3))
 assert sec2_qids == sec3_qids, f"QID mismatch: {len(sec2_qids)} vs {len(sec3_qids)}"
-assert len(sec2_qids) == 357, len(sec2_qids)
+assert len(sec2_qids) == N_Q, len(sec2_qids)
+# -cum duplicates must not collide with originals in storage/grading
+if REVIEW_ONLY:
+    cums = {q for q in sec2_qids if q.endswith("-cum")}
+    assert len(cums) == 82, len(cums)
+    assert {q[:-4] for q in cums} <= {q for q in sec2_qids if not q.endswith("-cum")}
 # Section 3 lookup anchors for future reveal.js (Phase 2)
 sec3_qids_attr = set(re.findall(r'data-qid="([^"]+)"', SEC3))
 assert sec2_qids == sec3_qids_attr, "reveal lookup mismatch"
@@ -760,7 +807,7 @@ for blob, name in [(HTML, "html"), (CSS, "css"), (ANS_JS, "answers"),
                    (JS_REVEAL, "reveal"), (JS_MAIN, "main")]:
     assert "http://" not in blob and "https://" not in blob, f"external URL in {name}"
 # justifications present for every gradeable MCQ in Section 3
-missing_j = [q["qid"] for q in ALLQ if q["kind"] == "mcq" and q["qid"] in gradeable and q["qid"] not in JUST_ALL]
+missing_j = [q["qid"] for q in ALLQ if q["kind"] == "mcq" and q["qid"] in gradeable and just_of(q) is None]
 
 assert not missing_j, missing_j[:10]
 
@@ -778,16 +825,15 @@ open(f"{BASE}/assets/js/filter.js", "w", encoding="utf-8").write(JS_FILTER)
 open(f"{BASE}/assets/js/grade.js", "w", encoding="utf-8").write(JS_GRADE)
 open(f"{BASE}/assets/js/reveal.js", "w", encoding="utf-8").write(JS_REVEAL)
 open(f"{BASE}/assets/js/main.js", "w", encoding="utf-8").write(JS_MAIN)
-print("OK lessons=14 totalQ=357 mcq=%d essay=%d gradeable=%d" % (
-    sum(1 for q in ALLQ if q["kind"] == "mcq"),
-    sum(1 for q in ALLQ if q["kind"] == "essay"), len(gradeable)))
+print("OK lessons=14 totalQ=%d mcq=%d essay=%d gradeable=%d" % (
+    N_Q, N_MCQ, N_ESS, len(gradeable)))
 print("groups:")
 for gtitle, gkind, gkey, qs in HGROUPS:
     print(" - %s: %d (%d mcq gradeable / %d essay)" % (
         gtitle, len(qs),
         sum(1 for q in qs if q["kind"] == "mcq" and q["qid"] in gradeable),
         sum(1 for q in qs if q["kind"] == "essay")))
-print("no-grading-leak section2: PASS; sec2<->sec3 QID match: PASS (357)")
+print("no-grading-leak section2: PASS; sec2<->sec3 QID match: PASS (%d)" % N_Q)
 print("terms linked: %d / %d" % (TERM_LINKED, TERM_TOTAL))
 if TERM_UNLINKED:
     print("unlinked terms:")
